@@ -22,8 +22,8 @@ devid init --paste
 # Distribute to all AI tools
 devid distribute
 
-# Copy a compact snippet to clipboard (for claude.ai)
-devid snippet
+# Install automatic session sync (optional, needs ANTHROPIC_API_KEY)
+devid hook install
 ```
 
 ## Commands
@@ -37,7 +37,8 @@ devid snippet
 | `devid sync` | Print extraction prompt for updating an existing identity |
 | `devid sync --apply` | Pipe AI response to queue a candidate update |
 | `devid review` | Approve/reject queued identity updates (TUI) |
-| `devid snippet` | Copy compact identity to clipboard |
+| `devid snippet` | Copy compact identity to clipboard (for claude.ai) |
+| `devid hook install` | Wire up automatic session-end analysis in Claude Code |
 
 ## How it works
 
@@ -48,10 +49,11 @@ devid snippet
    - `{repo}/AGENTS.md` (cross-tool compatibility)
    - `{repo}/.cursor/rules` (Cursor)
 3. Content is wrapped in `<!-- devid:start -->` / `<!-- devid:end -->` markers so your own notes in these files are preserved
+4. Optionally, the session-end hook monitors Claude Code sessions for corrections and preferences, queuing them for review
 
 ## AI extraction flow
 
-The recommended way to create or update your identity:
+The recommended way to create your identity - let an AI that already knows you do the work:
 
 ```bash
 # First time setup
@@ -66,6 +68,26 @@ devid sync --apply        # or pipe: powershell Get-Clipboard | devid sync --app
 
 devid review              # approve/reject changes in TUI
 ```
+
+## Automatic session sync
+
+devid can automatically analyze your Claude Code sessions when they end, picking up corrections and preference changes without any manual effort.
+
+```bash
+# Set your API key (needed for session analysis)
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Install the session-end hook
+devid hook install
+
+# That's it - devid now runs silently at session end
+# If it finds preference signals, they're queued for review
+devid review
+```
+
+**How it stays token-efficient:** devid pre-filters session transcripts for high-signal keywords - corrections ("don't", "stop", "no"), preferences ("prefer", "always", "instead"), and style instructions ("be more", "be less"). If no signals are found in a session, no API call is made. Zero tokens spent on sessions where nothing identity-relevant happened.
+
+When signals are found, only the matching messages and their surrounding context are sent to the API with a focused diff prompt that includes your current identity. The API only returns new or changed fields - not a full re-extraction.
 
 ## Identity schema
 
@@ -91,6 +113,32 @@ commit_style = "conventional commits, lowercase, imperative mood"
 [ai]
 verbosity = "concise, skip preamble, get to the point"
 tests = "write them, dont ask if I want them"
+
+[private]
+# Fields here are never included in distributed output
+api_key = "..."
 ```
 
 See `schema/identity.toml.example` for the full annotated schema.
+
+## Distribution targets
+
+| Target | Path | When |
+|--------|------|------|
+| Claude Code (global) | `~/.claude/CLAUDE.md` | Always |
+| Claude Code (project) | `{repo}/CLAUDE.md` | When repo matches a `[[projects]]` entry |
+| AGENTS.md | `{repo}/AGENTS.md` | When in a git repo |
+| Cursor | `{repo}/.cursor/rules` | When in a git repo |
+| Clipboard snippet | `devid snippet` | On demand (for claude.ai) |
+
+## File locations
+
+```
+~/.devid/
+  identity.toml        # source of truth
+  queue/               # pending candidate updates
+
+~/.claude/
+  settings.json        # hook config (after devid hook install)
+  CLAUDE.md            # global identity (after devid distribute)
+```
