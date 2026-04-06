@@ -38,6 +38,8 @@ devid hook install
 | `devid sync --apply` | Pipe AI response to queue a candidate update |
 | `devid review` | Approve/reject queued identity updates (TUI) |
 | `devid snippet` | Copy compact identity to clipboard (for claude.ai) |
+| `devid add [path]` | Scan a repo and add a project overlay to your identity |
+| `devid infer` | Infer identity from existing CLAUDE.md files across your repos |
 | `devid hook install` | Wire up automatic session-end analysis in Claude Code |
 
 ## How it works
@@ -89,6 +91,31 @@ devid review
 
 When signals are found, only the matching messages and their surrounding context are sent to the API with a focused diff prompt that includes your current identity. The API only returns new or changed fields - not a full re-extraction.
 
+## Project overlays
+
+Add per-project context so AI tools know the specifics of each repo:
+
+```bash
+# From inside a repo - scans go.mod, package.json, Dockerfile, etc
+devid add
+
+# Or point to a specific path
+devid add ~/projects/myapp
+```
+
+devid detects your stack (Go, TypeScript, Next.js, React, Python, Rust, etc) and infra (Docker, GitHub Actions, Vercel) automatically. You review and edit before saving.
+
+## Inferring from existing files
+
+Already have CLAUDE.md or .cursor/rules files scattered across repos? devid can scan them and extract a unified identity:
+
+```bash
+devid infer                           # scans sibling repos by default
+devid infer --dirs ~/projects,~/work  # scan specific directories
+```
+
+If `ANTHROPIC_API_KEY` is set, it sends the files to the API for extraction. Otherwise it copies a prompt to your clipboard for manual use.
+
 ## Identity schema
 
 The TOML schema is designed for maximum signal per token. Values are fragments, not sentences.
@@ -120,6 +147,8 @@ api_key = "..."
 ```
 
 See `schema/identity.toml.example` for the full annotated schema.
+
+`devid distribute` shows token estimates after writing, so you can verify your identity stays within budget (~400 tokens for global context). Sensitive data in non-private sections triggers a warning on save.
 
 ## Distribution targets
 
