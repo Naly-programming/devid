@@ -113,13 +113,16 @@ func runHookSessionEnd(cmd *cobra.Command, args []string) error {
 
 	var hookInput hook.HookInput
 	if err := json.Unmarshal(input, &hookInput); err != nil {
-		return fmt.Errorf("failed to parse hook input: %w", err)
+		return nil // Silently fail
 	}
 
-	// Need the transcript path
+	// Find the transcript - try stdin field first, then locate by session ID
 	transcriptPath := hookInput.TranscriptPath
+	if transcriptPath == "" && hookInput.SessionID != "" {
+		transcriptPath = hook.FindTranscript(hookInput.SessionID, hookInput.Cwd)
+	}
 	if transcriptPath == "" {
-		return nil // No transcript, nothing to do
+		return nil // No transcript found, nothing to do
 	}
 
 	// Read transcript messages

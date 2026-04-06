@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -82,7 +83,14 @@ func Load() (*Identity, error) {
 }
 
 // Save writes the identity to ~/.devid/identity.toml atomically.
+// Prints warnings if sensitive data is found in non-private sections.
 func Save(id *Identity) error {
+	// Check for sensitive data before saving
+	warnings := CheckSensitive(id)
+	if len(warnings) > 0 {
+		fmt.Print(FormatWarnings(warnings))
+	}
+
 	id.Meta.UpdatedAt = time.Now().UTC()
 
 	p, err := IdentityPath()

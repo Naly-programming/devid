@@ -6,6 +6,7 @@ import (
 
 	"github.com/Naly-programming/devid/internal/config"
 	"github.com/Naly-programming/devid/internal/distribute"
+	"github.com/Naly-programming/devid/internal/generate"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +32,11 @@ func runDistribute(cmd *cobra.Command, args []string) error {
 
 	results := distribute.Distribute(id)
 	printDistributeResults(results)
+
+	// Show token estimates
+	estimates := generate.EstimateAll(id)
+	fmt.Print(generate.FormatEstimates(estimates))
+
 	return nil
 }
 

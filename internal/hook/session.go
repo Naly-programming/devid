@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -13,6 +14,49 @@ type HookInput struct {
 	TranscriptPath string `json:"transcript_path"`
 	Cwd            string `json:"cwd"`
 	HookEventName  string `json:"hook_event_name"`
+}
+
+// FindTranscript locates a session's JSONL transcript file.
+// Claude Code stores transcripts in ~/.claude/projects/{project-hash}/{session-id}.jsonl
+func FindTranscript(sessionID, cwd string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	projectsDir := filepath.Join(home, ".claude", "projects")
+	entries, err := os.ReadDir(projectsDir)
+	if err != nil {
+		return ""
+	}
+
+	target := sessionID + ".jsonl"
+
+	// If we have a cwd, try the matching project dir first
+	if cwd != "" {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+			path := filepath.Join(projectsDir, entry.Name(), target)
+			if _, err := os.Stat(path); err == nil {
+				return path
+			}
+		}
+	}
+
+	// Fallback: search all project dirs
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		path := filepath.Join(projectsDir, entry.Name(), target)
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+
+	return ""
 }
 
 // transcriptEntry represents one line of the session JSONL.
