@@ -1,0 +1,26 @@
+<!-- devid:start -->
+<!-- managed by devid - do not edit between markers -->
+# Developer Identity (devid)
+
+Tone: direct, northern, no fluff
+Comments: sound like dev wrote it, not a textbook
+Responses: prose over bullets, hyphens not em dashes, no emoji
+
+Stack: Go, TypeScript, Next.js, PostgreSQL, Supabase, Tailscale, PM2, Vercel, GitHub Actions, Docker
+
+Avoid:
+- playwright-go
+- Prisma
+- ORM abstraction over raw SQL
+
+Conventions:
+- hyphens not em dashes, no trailing punctuation in comments
+- small focused PRs, one concern per PR
+- conventional commits, lowercase, imperative mood
+- explicit, no silent swallows, log with context
+- clear over clever, full words not abbreviations
+
+AI:
+- concise, skip preamble
+- tests: write them without asking
+<!-- devid:end -->
