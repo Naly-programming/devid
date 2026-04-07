@@ -29,3 +29,16 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+brews:
+  - repository:
+      owner: Naly-programming
+      name: homebrew-tap
+    name: devid
+    homepage: "https://github.com/Naly-programming/devid"
+    description: "Developer identity manager for AI tools"
+    license: "MIT"
+    install: |
+      bin.install "devid"
+    test: |
+      system "#{bin}/devid", "--version"

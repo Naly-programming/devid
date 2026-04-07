@@ -9,12 +9,16 @@ https://github.com/user-attachments/assets/52675d0c-2410-41b8-8226-3bead9224974
 ## Install
 
 ```bash
+# macOS (Homebrew)
+brew install Naly-programming/tap/devid
+
+# npm (any platform)
+npm install -g devid-cli
+
+# shell script (Linux/macOS)
 curl -fsSL https://raw.githubusercontent.com/Naly-programming/devid/main/install.sh | sh
-```
 
-Or with Go:
-
-```bash
+# Go
 go install github.com/Naly-programming/devid/cmd/devid@latest
 ```
 
@@ -60,6 +64,9 @@ devid hook install
 | `devid mcp` | Start the MCP server for Claude.ai and other MCP clients |
 | `devid hook install` | Wire up automatic session-end analysis in Claude Code |
 | `devid hook logs` | Show recent hook activity for debugging |
+| `devid doctor` | Diagnose common issues with your setup |
+| `devid export` | Export identity (private data excluded) |
+| `devid import [file]` | Import an identity from a TOML file |
 
 ## How it works
 
@@ -254,6 +261,40 @@ devid snippet --print
 
 ~/.gemini/
   GEMINI.md            # global identity (after devid distribute)
+```
+
+## Troubleshooting
+
+```bash
+devid doctor    # checks identity, targets, tokens, hook, API key, git
+```
+
+## Sharing identities
+
+```bash
+# Export your identity (private data excluded)
+devid export > my-identity.toml
+
+# Import someone else's as a starting point
+devid import their-identity.toml
+
+# Import merges on top of your existing identity if you have one
+```
+
+## Shell completions
+
+```bash
+# bash
+devid completion bash > /etc/bash_completion.d/devid
+
+# zsh
+devid completion zsh > "${fpath[1]}/_devid"
+
+# fish
+devid completion fish > ~/.config/fish/completions/devid.fish
+
+# powershell
+devid completion powershell | Out-String | Invoke-Expression
 ```
 
 ## License
