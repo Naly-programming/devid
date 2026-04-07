@@ -31,8 +31,9 @@ func SetRepoDetector(fn func() (root string, name string, err error)) {
 func Distribute(id *config.Identity) []Result {
 	var results []Result
 
-	// Global CLAUDE.md
+	// Global targets
 	results = append(results, distributeGlobal(id))
+	results = append(results, distributeGeminiGlobal(id))
 
 	// Project-scoped targets (only if inside a git repo)
 	root, repoName, err := repoDetectorFunc()
@@ -66,6 +67,28 @@ func distributeGlobal(id *config.Identity) Result {
 	return Result{Target: "claude-global", Path: path, Action: action, Err: err}
 }
 
+func distributeGeminiGlobal(id *config.Identity) Result {
+	devidDir, err := config.DevidDir()
+	if err != nil {
+		return Result{Target: "gemini-global", Err: fmt.Errorf("cannot find home dir: %w", err)}
+	}
+	home := filepath.Dir(devidDir)
+
+	geminiDir := filepath.Join(home, ".gemini")
+	if err := os.MkdirAll(geminiDir, 0o755); err != nil {
+		return Result{Target: "gemini-global", Err: err}
+	}
+
+	content, err := generate.Render(id, generate.TargetGeminiGlobal, nil)
+	if err != nil {
+		return Result{Target: "gemini-global", Err: err}
+	}
+
+	path := filepath.Join(geminiDir, "GEMINI.md")
+	action, err := writeWithMarkers(path, content)
+	return Result{Target: "gemini-global", Path: path, Action: action, Err: err}
+}
+
 func distributeProjectTargets(id *config.Identity, repoRoot string, proj *config.Project) []Result {
 	var results []Result
 
@@ -78,6 +101,18 @@ func distributeProjectTargets(id *config.Identity, repoRoot string, proj *config
 			path := filepath.Join(repoRoot, "CLAUDE.md")
 			action, err := writeWithMarkers(path, content)
 			results = append(results, Result{Target: "claude-project", Path: path, Action: action, Err: err})
+		}
+	}
+
+	// Project GEMINI.md
+	if proj != nil {
+		content, err := generate.Render(id, generate.TargetGeminiProject, proj)
+		if err != nil {
+			results = append(results, Result{Target: "gemini-project", Err: err})
+		} else {
+			path := filepath.Join(repoRoot, "GEMINI.md")
+			action, err := writeWithMarkers(path, content)
+			results = append(results, Result{Target: "gemini-project", Path: path, Action: action, Err: err})
 		}
 	}
 
@@ -100,11 +135,75 @@ func distributeProjectTargets(id *config.Identity, repoRoot string, proj *config
 		if err := os.MkdirAll(rulesDir, 0o755); err != nil {
 			results = append(results, Result{Target: "cursor", Err: err})
 		} else {
-			// Cursor .mdc files are standalone - no markers needed, devid owns the whole file
 			path := filepath.Join(rulesDir, "devid.mdc")
 			action, err := writeFile(path, content)
 			results = append(results, Result{Target: "cursor", Path: path, Action: action, Err: err})
 		}
+	}
+
+	// GitHub Copilot (.github/copilot-instructions.md)
+	content, err = generate.Render(id, generate.TargetCopilot, nil)
+	if err != nil {
+		results = append(results, Result{Target: "copilot", Err: err})
+	} else {
+		ghDir := filepath.Join(repoRoot, ".github")
+		if err := os.MkdirAll(ghDir, 0o755); err != nil {
+			results = append(results, Result{Target: "copilot", Err: err})
+		} else {
+			path := filepath.Join(ghDir, "copilot-instructions.md")
+			action, err := writeWithMarkers(path, content)
+			results = append(results, Result{Target: "copilot", Path: path, Action: action, Err: err})
+		}
+	}
+
+	// Cline (.clinerules)
+	content, err = generate.Render(id, generate.TargetCline, nil)
+	if err != nil {
+		results = append(results, Result{Target: "cline", Err: err})
+	} else {
+		path := filepath.Join(repoRoot, ".clinerules")
+		action, err := writeWithMarkers(path, content)
+		results = append(results, Result{Target: "cline", Path: path, Action: action, Err: err})
+	}
+
+	// Roo Code (.roo/rules/devid.md)
+	content, err = generate.Render(id, generate.TargetRooCode, nil)
+	if err != nil {
+		results = append(results, Result{Target: "roocode", Err: err})
+	} else {
+		rooDir := filepath.Join(repoRoot, ".roo", "rules")
+		if err := os.MkdirAll(rooDir, 0o755); err != nil {
+			results = append(results, Result{Target: "roocode", Err: err})
+		} else {
+			path := filepath.Join(rooDir, "devid.md")
+			action, err := writeFile(path, content)
+			results = append(results, Result{Target: "roocode", Path: path, Action: action, Err: err})
+		}
+	}
+
+	// Windsurf (.windsurf/rules/devid.md)
+	content, err = generate.Render(id, generate.TargetWindsurf, nil)
+	if err != nil {
+		results = append(results, Result{Target: "windsurf", Err: err})
+	} else {
+		wsDir := filepath.Join(repoRoot, ".windsurf", "rules")
+		if err := os.MkdirAll(wsDir, 0o755); err != nil {
+			results = append(results, Result{Target: "windsurf", Err: err})
+		} else {
+			path := filepath.Join(wsDir, "devid.md")
+			action, err := writeFile(path, content)
+			results = append(results, Result{Target: "windsurf", Path: path, Action: action, Err: err})
+		}
+	}
+
+	// Aider (CONVENTIONS.md)
+	content, err = generate.Render(id, generate.TargetAider, nil)
+	if err != nil {
+		results = append(results, Result{Target: "aider", Err: err})
+	} else {
+		path := filepath.Join(repoRoot, "CONVENTIONS.md")
+		action, err := writeWithMarkers(path, content)
+		results = append(results, Result{Target: "aider", Path: path, Action: action, Err: err})
 	}
 
 	return results

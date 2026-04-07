@@ -14,8 +14,15 @@ const (
 	TargetClaudeGlobal  Target = iota // ~/.claude/CLAUDE.md
 	TargetClaudeProject               // {repo}/CLAUDE.md
 	TargetAgentsMD                    // {repo}/AGENTS.md
-	TargetCursor                      // .cursor/rules
+	TargetCursor                      // .cursor/rules/devid.mdc
 	TargetSnippet                     // clipboard snippet
+	TargetCopilot                     // .github/copilot-instructions.md
+	TargetCline                       // .clinerules
+	TargetRooCode                     // .roo/rules/devid.md
+	TargetWindsurf                    // .windsurf/rules/devid.md
+	TargetAider                       // CONVENTIONS.md
+	TargetGeminiGlobal                // ~/.gemini/GEMINI.md
+	TargetGeminiProject               // {repo}/GEMINI.md
 )
 
 const (
@@ -42,6 +49,23 @@ func Render(id *config.Identity, target Target, project *config.Project) (string
 		return renderCursor(&clean), nil
 	case TargetSnippet:
 		return renderSnippet(&clean), nil
+	case TargetCopilot:
+		return renderCopilot(&clean), nil
+	case TargetCline:
+		return renderCline(&clean), nil
+	case TargetRooCode:
+		return renderRooCode(&clean), nil
+	case TargetWindsurf:
+		return renderWindsurf(&clean), nil
+	case TargetAider:
+		return renderAider(&clean), nil
+	case TargetGeminiGlobal:
+		return renderGeminiGlobal(&clean), nil
+	case TargetGeminiProject:
+		if project == nil {
+			return "", fmt.Errorf("project required for TargetGeminiProject")
+		}
+		return renderGeminiProject(&clean, project), nil
 	default:
 		return "", fmt.Errorf("unknown target: %d", target)
 	}

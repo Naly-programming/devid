@@ -2,3 +2,8 @@
 /devid.exe
 .devid/
 /test-harness/
+# Generated distribution targets (devid distribute creates these)
+.clinerules
+.roo/
+.windsurf/
+CONVENTIONS.md

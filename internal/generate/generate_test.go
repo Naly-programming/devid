@@ -112,6 +112,97 @@ func TestRenderSnippet(t *testing.T) {
 	assertGolden(t, "snippet.txt", out)
 }
 
+func TestRenderCopilot(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetCopilot, nil)
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if !strings.Contains(out, "Developer Identity") {
+		t.Error("expected Developer Identity heading")
+	}
+	if !strings.Contains(out, "Go") {
+		t.Error("expected Go in stack")
+	}
+}
+
+func TestRenderCline(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetCline, nil)
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if out == "" {
+		t.Error("empty output")
+	}
+}
+
+func TestRenderRooCode(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetRooCode, nil)
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if out == "" {
+		t.Error("empty output")
+	}
+}
+
+func TestRenderWindsurf(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetWindsurf, nil)
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if !strings.HasPrefix(out, "---\n") {
+		t.Error("windsurf should have YAML frontmatter")
+	}
+	if !strings.Contains(out, "trigger: always") {
+		t.Error("windsurf should have trigger: always")
+	}
+}
+
+func TestRenderAider(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetAider, nil)
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if out == "" {
+		t.Error("empty output")
+	}
+}
+
+func TestRenderGeminiGlobal(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetGeminiGlobal, nil)
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if !strings.Contains(out, "Developer Identity") {
+		t.Error("expected Developer Identity heading")
+	}
+}
+
+func TestRenderGeminiProject(t *testing.T) {
+	id := loadTestIdentity(t)
+	out, err := Render(id, TargetGeminiProject, &id.Projects[0])
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+	if !strings.Contains(out, id.Projects[0].Name) {
+		t.Error("expected project name in output")
+	}
+}
+
+func TestRenderGeminiProjectNilError(t *testing.T) {
+	id := loadTestIdentity(t)
+	_, err := Render(id, TargetGeminiProject, nil)
+	if err == nil {
+		t.Error("expected error when project is nil")
+	}
+}
+
 func TestPrivateDataExcluded(t *testing.T) {
 	id := loadTestIdentity(t)
 	if id.Private == nil {
@@ -127,6 +218,12 @@ func TestPrivateDataExcluded(t *testing.T) {
 		{TargetAgentsMD, &id.Projects[0]},
 		{TargetCursor, nil},
 		{TargetSnippet, nil},
+		{TargetCopilot, nil},
+		{TargetCline, nil},
+		{TargetRooCode, nil},
+		{TargetWindsurf, nil},
+		{TargetAider, nil},
+		{TargetGeminiGlobal, nil},
 	}
 
 	for _, tc := range targets {

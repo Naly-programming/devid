@@ -69,6 +69,13 @@ devid hook install
    - `{repo}/CLAUDE.md` (per-project overlay, if a matching project is configured)
    - `{repo}/AGENTS.md` (cross-tool compatibility)
    - `{repo}/.cursor/rules/devid.mdc` (Cursor, with YAML frontmatter)
+   - `{repo}/.github/copilot-instructions.md` (GitHub Copilot)
+   - `{repo}/.clinerules` (Cline)
+   - `{repo}/.roo/rules/devid.md` (Roo Code)
+   - `{repo}/.windsurf/rules/devid.md` (Windsurf)
+   - `{repo}/CONVENTIONS.md` (Aider)
+   - `{repo}/GEMINI.md` (Gemini, per-project)
+   - `~/.gemini/GEMINI.md` (Gemini, global)
 3. Content is wrapped in `<!-- devid:start -->` / `<!-- devid:end -->` markers so your own notes in these files are preserved
 4. Optionally, the session-end hook or watch command monitors Claude Code sessions for corrections and preferences, queuing them for review
 
@@ -206,8 +213,31 @@ See `schema/identity.toml.example` for the full annotated schema.
 | Claude Code (project) | `{repo}/CLAUDE.md` | When repo matches a `[[projects]]` entry |
 | AGENTS.md | `{repo}/AGENTS.md` | When in a git repo |
 | Cursor | `{repo}/.cursor/rules/devid.mdc` | When in a git repo |
-| Clipboard snippet | `devid snippet` | On demand (for claude.ai) |
+| GitHub Copilot | `{repo}/.github/copilot-instructions.md` | When in a git repo |
+| Cline | `{repo}/.clinerules` | When in a git repo |
+| Roo Code | `{repo}/.roo/rules/devid.md` | When in a git repo |
+| Windsurf | `{repo}/.windsurf/rules/devid.md` | When in a git repo |
+| Aider | `{repo}/CONVENTIONS.md` | When in a git repo |
+| Gemini (global) | `~/.gemini/GEMINI.md` | Always |
+| Gemini (project) | `{repo}/GEMINI.md` | When repo matches a `[[projects]]` entry |
+| ChatGPT / OpenAI | `devid snippet --json` | On demand (system message JSON) |
+| Clipboard snippet | `devid snippet` | On demand (for claude.ai, ChatGPT, etc) |
 | MCP server | `devid mcp` | On demand (for any MCP client) |
+
+## ChatGPT / OpenAI API
+
+ChatGPT doesn't have file-based instructions, but devid can format your identity for the OpenAI API:
+
+```bash
+# Copy snippet to clipboard (paste into ChatGPT custom instructions)
+devid snippet
+
+# Output as OpenAI system message JSON (for API use)
+devid snippet --json
+
+# Print to stdout instead of clipboard
+devid snippet --print
+```
 
 ## File locations
 
@@ -221,6 +251,9 @@ See `schema/identity.toml.example` for the full annotated schema.
 ~/.claude/
   settings.json        # hook config (after devid hook install)
   CLAUDE.md            # global identity (after devid distribute)
+
+~/.gemini/
+  GEMINI.md            # global identity (after devid distribute)
 ```
 
 ## License
