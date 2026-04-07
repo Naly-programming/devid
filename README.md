@@ -28,6 +28,9 @@ devid init --paste
 # Distribute to all AI tools
 devid distribute
 
+# Check everything is in sync
+devid status
+
 # Install automatic session sync (optional, needs ANTHROPIC_API_KEY)
 devid hook install
 ```
@@ -40,13 +43,18 @@ devid hook install
 | `devid init --paste` | Create identity from TOML on your clipboard |
 | `devid init --apply` | Create identity from TOML piped via stdin |
 | `devid distribute` | Render and write identity to all target files |
+| `devid status` | Show identity overview - targets, tokens, queue, hook status |
+| `devid diff` | Show what's changed vs distributed files and pending queue |
+| `devid edit` | Open identity.toml in your editor |
 | `devid sync` | Print extraction prompt for updating an existing identity |
+| `devid sync --paste` | Read AI response from clipboard and queue for review |
 | `devid sync --apply` | Pipe AI response to queue a candidate update |
 | `devid review` | Approve/reject queued identity updates (TUI) |
 | `devid snippet` | Copy compact identity to clipboard (for claude.ai) |
 | `devid add [path]` | Scan a repo and add a project overlay to your identity |
 | `devid infer` | Infer identity from existing CLAUDE.md files across your repos |
 | `devid hook install` | Wire up automatic session-end analysis in Claude Code |
+| `devid hook logs` | Show recent hook activity for debugging |
 
 ## How it works
 
@@ -72,7 +80,7 @@ devid init --paste        # reads clipboard, saves identity, distributes
 # Updating an existing identity
 devid sync                # extraction prompt copied to clipboard
                           # paste into Claude, copy the TOML response
-devid sync --apply        # or pipe: powershell Get-Clipboard | devid sync --apply
+devid sync --paste        # reads clipboard, queues for review
 
 devid review              # approve/reject changes in TUI
 ```
@@ -91,11 +99,29 @@ devid hook install
 # That's it - devid now runs silently at session end
 # If it finds preference signals, they're queued for review
 devid review
+
+# Check what the hook has been doing
+devid hook logs
 ```
 
 **How it stays token-efficient:** devid pre-filters session transcripts for high-signal keywords - corrections ("don't", "stop", "no"), preferences ("prefer", "always", "instead"), and style instructions ("be more", "be less"). If no signals are found in a session, no API call is made. Zero tokens spent on sessions where nothing identity-relevant happened.
 
 When signals are found, only the matching messages and their surrounding context are sent to the API with a focused diff prompt that includes your current identity. The API only returns new or changed fields - not a full re-extraction.
+
+## Visibility
+
+```bash
+# Full overview of your identity, targets, tokens, queue, and hook status
+devid status
+
+# See what's out of date or pending
+devid diff
+
+# Quick edit
+devid edit
+```
+
+`devid distribute` and `devid init` show token estimates so you can verify your identity stays within budget (~400 tokens for global context). Sensitive data in non-private sections triggers a warning on save.
 
 ## Project overlays
 
@@ -154,8 +180,6 @@ api_key = "..."
 
 See `schema/identity.toml.example` for the full annotated schema.
 
-`devid distribute` shows token estimates after writing, so you can verify your identity stays within budget (~400 tokens for global context). Sensitive data in non-private sections triggers a warning on save.
-
 ## Distribution targets
 
 | Target | Path | When |
@@ -172,8 +196,13 @@ See `schema/identity.toml.example` for the full annotated schema.
 ~/.devid/
   identity.toml        # source of truth
   queue/               # pending candidate updates
+  logs/                # hook activity logs
 
 ~/.claude/
   settings.json        # hook config (after devid hook install)
   CLAUDE.md            # global identity (after devid distribute)
 ```
+
+## License
+
+MIT

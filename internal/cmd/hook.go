@@ -18,6 +18,7 @@ import (
 func init() {
 	hookCmd.AddCommand(hookInstallCmd)
 	hookCmd.AddCommand(hookSessionEndCmd)
+	hookCmd.AddCommand(hookLogsCmd)
 	rootCmd.AddCommand(hookCmd)
 }
 
@@ -37,6 +38,12 @@ var hookSessionEndCmd = &cobra.Command{
 	Short:  "Process a completed session (called by Claude Code hook)",
 	Hidden: true,
 	RunE:   runHookSessionEnd,
+}
+
+var hookLogsCmd = &cobra.Command{
+	Use:   "logs",
+	Short: "Show recent hook activity",
+	RunE:  runHookLogs,
 }
 
 func runHookInstall(cmd *cobra.Command, args []string) error {
@@ -104,17 +111,36 @@ func runHookInstall(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func runHookLogs(cmd *cobra.Command, args []string) error {
+	logs, err := hook.ReadLogs(50)
+	if err != nil {
+		return err
+	}
+	if logs == "" {
+		fmt.Println("No hook activity logged yet.")
+		return nil
+	}
+	fmt.Print(logs)
+	return nil
+}
+
 func runHookSessionEnd(cmd *cobra.Command, args []string) error {
+	hook.Log("session-end hook triggered")
+
 	// Read hook input from stdin
 	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
+		hook.Log("failed to read stdin: %v", err)
 		return err
 	}
 
 	var hookInput hook.HookInput
 	if err := json.Unmarshal(input, &hookInput); err != nil {
-		return nil // Silently fail
+		hook.Log("failed to parse hook input: %v", err)
+		return nil
 	}
+
+	hook.Log("session: %s, cwd: %s", hookInput.SessionID, hookInput.Cwd)
 
 	// Find the transcript - try stdin field first, then locate by session ID
 	transcriptPath := hookInput.TranscriptPath
@@ -122,23 +148,30 @@ func runHookSessionEnd(cmd *cobra.Command, args []string) error {
 		transcriptPath = hook.FindTranscript(hookInput.SessionID, hookInput.Cwd)
 	}
 	if transcriptPath == "" {
-		return nil // No transcript found, nothing to do
+		hook.Log("no transcript found, skipping")
+		return nil
 	}
+
+	hook.Log("transcript: %s", transcriptPath)
 
 	// Read transcript messages
 	messages, err := hook.ReadTranscriptMessages(transcriptPath)
 	if err != nil {
-		return nil // Silently fail - don't break the user's session close
+		hook.Log("failed to read transcript: %v", err)
+		return nil
 	}
 
 	if len(messages) == 0 {
+		hook.Log("no messages in transcript, skipping")
 		return nil
 	}
 
 	// Check for signals before calling the API
 	signalCount := hook.CountSignals(messages)
+	hook.Log("%d messages, %d signals detected", len(messages), signalCount)
 	if signalCount == 0 {
-		return nil // No signals, no API call, zero tokens
+		hook.Log("no signals, skipping API call")
+		return nil
 	}
 
 	// Load current identity
@@ -146,17 +179,21 @@ func runHookSessionEnd(cmd *cobra.Command, args []string) error {
 	if config.Exists() {
 		current, err = config.Load()
 		if err != nil {
+			hook.Log("failed to load identity: %v", err)
 			return nil
 		}
 	}
 
 	// Analyze the session
+	hook.Log("calling API for analysis...")
 	proposed, _, err := hook.AnalyzeSession(messages, current)
 	if err != nil {
-		return nil // Silently fail
+		hook.Log("analysis failed: %v", err)
+		return nil
 	}
 	if proposed == nil {
-		return nil // No changes
+		hook.Log("no changes detected by API")
+		return nil
 	}
 
 	// Compute diff
@@ -173,5 +210,11 @@ func runHookSessionEnd(cmd *cobra.Command, args []string) error {
 		Diff:      diff,
 	}
 
-	return devsync.Enqueue(candidate)
+	if err := devsync.Enqueue(candidate); err != nil {
+		hook.Log("failed to enqueue: %v", err)
+		return err
+	}
+
+	hook.Log("queued 1 candidate for review")
+	return nil
 }

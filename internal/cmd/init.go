@@ -9,6 +9,7 @@ import (
 	"github.com/Naly-programming/devid/internal/config"
 	"github.com/Naly-programming/devid/internal/distribute"
 	"github.com/Naly-programming/devid/internal/extract"
+	"github.com/Naly-programming/devid/internal/generate"
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -139,6 +140,7 @@ func saveFromResponse(input string) error {
 
 	results := distribute.Distribute(id)
 	printDistributeResults(results)
+	fmt.Print(generate.FormatEstimates(generate.EstimateAll(id)))
 
 	return nil
 }

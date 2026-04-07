@@ -8,6 +8,7 @@ import (
 
 	"github.com/Naly-programming/devid/internal/config"
 	"github.com/Naly-programming/devid/internal/extract"
+	"github.com/Naly-programming/devid/internal/generate"
 	devsync "github.com/Naly-programming/devid/internal/sync"
 	"github.com/atotto/clipboard"
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ import (
 
 func init() {
 	syncCmd.Flags().Bool("apply", false, "Read proposed TOML from stdin and queue it")
+	syncCmd.Flags().Bool("paste", false, "Read proposed TOML from clipboard and queue it")
 	rootCmd.AddCommand(syncCmd)
 }
 
@@ -25,12 +27,26 @@ var syncCmd = &cobra.Command{
 }
 
 func runSync(cmd *cobra.Command, args []string) error {
+	paste, _ := cmd.Flags().GetBool("paste")
+	if paste {
+		return runSyncPaste()
+	}
 	apply, _ := cmd.Flags().GetBool("apply")
-
 	if apply {
 		return runSyncApply()
 	}
 	return runSyncPrompt()
+}
+
+func runSyncPaste() error {
+	input, err := clipboard.ReadAll()
+	if err != nil {
+		return fmt.Errorf("failed to read clipboard: %w", err)
+	}
+	if len(input) == 0 {
+		return fmt.Errorf("clipboard is empty")
+	}
+	return syncFromInput(input)
 }
 
 func runSyncPrompt() error {
@@ -56,17 +72,19 @@ func runSyncPrompt() error {
 }
 
 func runSyncApply() error {
-	input, err := io.ReadAll(os.Stdin)
+	raw, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return fmt.Errorf("failed to read stdin: %w", err)
 	}
+	return syncFromInput(string(raw))
+}
 
-	proposed, err := extract.ParseTOMLResponse(string(input))
+func syncFromInput(input string) error {
+	proposed, err := extract.ParseTOMLResponse(input)
 	if err != nil {
 		return fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	// Load current identity for diff
 	var current *config.Identity
 	if config.Exists() {
 		current, err = config.Load()
@@ -82,7 +100,6 @@ func runSyncApply() error {
 		return fmt.Errorf("failed to compute diff: %w", err)
 	}
 
-	// Check if there are actual changes
 	hasChanges := false
 	for _, line := range splitLines(diff) {
 		if len(line) > 0 && (line[0] == '+' || line[0] == '-') {
@@ -107,6 +124,11 @@ func runSyncApply() error {
 	}
 
 	fmt.Println("Queued 1 candidate for review. Run `devid review` to approve.")
+
+	// Show what token budget would look like if approved
+	merged := extract.MergeIdentities(current, proposed)
+	fmt.Print(generate.FormatEstimates(generate.EstimateAll(merged)))
+
 	return nil
 }
 
