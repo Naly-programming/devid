@@ -6,10 +6,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Naly-programming/devid/internal/api"
 	"github.com/Naly-programming/devid/internal/config"
 	"github.com/Naly-programming/devid/internal/distribute"
 	"github.com/Naly-programming/devid/internal/extract"
 	"github.com/Naly-programming/devid/internal/generate"
+	"github.com/Naly-programming/devid/internal/scan"
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -62,24 +64,66 @@ func runInitInteractive() error {
 		}
 	}
 
+	// If API key is available, offer direct API extraction
+	options := []huh.Option[string]{
+		huh.NewOption("Fill in manually", "manual"),
+	}
+	if api.Available() {
+		options = []huh.Option[string]{
+			huh.NewOption("Extract automatically via API (recommended)", "api"),
+			huh.NewOption("Extract from AI (copy/paste)", "ai"),
+			huh.NewOption("Fill in manually", "manual"),
+		}
+	} else {
+		options = []huh.Option[string]{
+			huh.NewOption("Extract from AI (copy/paste)", "ai"),
+			huh.NewOption("Fill in manually", "manual"),
+		}
+	}
+
 	var mode string
 	err := huh.NewSelect[string]().
 		Title("How do you want to create your identity?").
-		Options(
-			huh.NewOption("Extract from AI (recommended)", "ai").
-				Selected(true),
-			huh.NewOption("Fill in manually", "manual"),
-		).
+		Options(options...).
 		Value(&mode).
 		Run()
 	if err != nil {
 		return err
 	}
 
-	if mode == "ai" {
+	switch mode {
+	case "api":
+		return runInitAPI()
+	case "ai":
 		return runInitAI()
+	default:
+		return runInitManual()
 	}
-	return runInitManual()
+}
+
+func runInitAPI() error {
+	fmt.Println("Scanning for existing context files...")
+
+	// Scan for existing CLAUDE.md, .cursorrules, etc
+	cwd, _ := os.Getwd()
+	sources := scan.FindExistingContextFiles([]string{cwd + "/.."})
+
+	var prompt string
+	if len(sources) > 0 {
+		fmt.Printf("Found %d existing context files, using them as input.\n", len(sources))
+		prompt = scan.BuildInferencePrompt(sources)
+	} else {
+		fmt.Println("No existing context files found, using blank extraction prompt.")
+		prompt = extract.BuildSyncPrompt(nil)
+	}
+
+	fmt.Println("Calling Claude API...")
+	response, err := api.Call(extract.ExtractionPrompt, prompt)
+	if err != nil {
+		return fmt.Errorf("API call failed: %w", err)
+	}
+
+	return saveFromResponse(response)
 }
 
 func runInitAI() error {

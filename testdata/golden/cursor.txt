@@ -1,4 +1,9 @@
-# Developer Identity (devid)
+---
+description: Developer identity and preferences managed by devid
+alwaysApply: true
+---
+
+# Developer Identity
 
 Tone: direct, plain-spoken, no fluff, no emoji, northern
 Comments: sound like the dev wrote it, not a textbook

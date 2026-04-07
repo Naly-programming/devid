@@ -21,7 +21,7 @@ go install github.com/Naly-programming/devid/cmd/devid@latest
 ## Quick start
 
 ```bash
-# Bootstrap your identity (interactive - choose AI extraction or manual)
+# Bootstrap your identity (interactive - choose API, copy/paste, or manual)
 devid init
 
 # Or let AI extract your identity, then paste the response back
@@ -41,7 +41,7 @@ devid hook install
 
 | Command | Description |
 |---------|-------------|
-| `devid init` | Bootstrap your identity - extract from AI or fill in manually |
+| `devid init` | Bootstrap your identity - API extraction, copy/paste, or manual form |
 | `devid init --paste` | Create identity from TOML on your clipboard |
 | `devid init --apply` | Create identity from TOML piped via stdin |
 | `devid distribute` | Render and write identity to all target files |
@@ -51,10 +51,13 @@ devid hook install
 | `devid sync` | Print extraction prompt for updating an existing identity |
 | `devid sync --paste` | Read AI response from clipboard and queue for review |
 | `devid sync --apply` | Pipe AI response to queue a candidate update |
+| `devid sync --now` | Combine with --paste or --apply to skip the review queue |
 | `devid review` | Approve/reject queued identity updates (TUI) |
 | `devid snippet` | Copy compact identity to clipboard (for claude.ai) |
 | `devid add [path]` | Scan a repo and add a project overlay to your identity |
 | `devid infer` | Infer identity from existing CLAUDE.md files across your repos |
+| `devid watch` | Scan recent sessions for identity signals (--once for cron) |
+| `devid mcp` | Start the MCP server for Claude.ai and other MCP clients |
 | `devid hook install` | Wire up automatic session-end analysis in Claude Code |
 | `devid hook logs` | Show recent hook activity for debugging |
 
@@ -65,50 +68,63 @@ devid hook install
    - `~/.claude/CLAUDE.md` (global Claude Code context)
    - `{repo}/CLAUDE.md` (per-project overlay, if a matching project is configured)
    - `{repo}/AGENTS.md` (cross-tool compatibility)
-   - `{repo}/.cursor/rules` (Cursor)
+   - `{repo}/.cursor/rules/devid.mdc` (Cursor, with YAML frontmatter)
 3. Content is wrapped in `<!-- devid:start -->` / `<!-- devid:end -->` markers so your own notes in these files are preserved
-4. Optionally, the session-end hook monitors Claude Code sessions for corrections and preferences, queuing them for review
+4. Optionally, the session-end hook or watch command monitors Claude Code sessions for corrections and preferences, queuing them for review
 
 ## AI extraction flow
 
 The recommended way to create your identity - let an AI that already knows you do the work:
 
 ```bash
-# First time setup
-devid init                # choose "Extract from AI" - prompt copied to clipboard
+# With API key (one command, zero copy-paste)
+export ANTHROPIC_API_KEY=sk-ant-...
+devid init                # picks "Extract automatically via API"
+                          # scans existing context files, calls Claude, done
+
+# Without API key (copy-paste flow)
+devid init                # picks "Extract from AI" - prompt copied to clipboard
                           # paste into Claude, copy the TOML response
 devid init --paste        # reads clipboard, saves identity, distributes
 
 # Updating an existing identity
 devid sync                # extraction prompt copied to clipboard
-                          # paste into Claude, copy the TOML response
-devid sync --paste        # reads clipboard, queues for review
+devid sync --paste        # queue for review
+devid sync --paste --now  # apply immediately, skip queue
 
-devid review              # approve/reject changes in TUI
+devid review              # approve/reject queued changes in TUI
 ```
 
 ## Automatic session sync
 
-devid can automatically analyze your Claude Code sessions when they end, picking up corrections and preference changes without any manual effort.
+devid can automatically analyze your Claude Code sessions, picking up corrections and preference changes without any manual effort. Two approaches:
+
+**Session-end hook** (fires when a Claude Code session closes):
 
 ```bash
-# Set your API key (needed for session analysis)
 export ANTHROPIC_API_KEY=sk-ant-...
+devid hook install            # adds SessionEnd hook to ~/.claude/settings.json
+devid hook logs               # check what the hook has been doing
+```
 
-# Install the session-end hook
-devid hook install
+**Watch mode** (scans all recent sessions):
 
-# That's it - devid now runs silently at session end
-# If it finds preference signals, they're queued for review
-devid review
-
-# Check what the hook has been doing
-devid hook logs
+```bash
+devid watch --once            # scan once and exit (for cron)
+devid watch --interval 300    # continuous, scan every 5 minutes
 ```
 
 **How it stays token-efficient:** devid pre-filters session transcripts for high-signal keywords - corrections ("don't", "stop", "no"), preferences ("prefer", "always", "instead"), and style instructions ("be more", "be less"). If no signals are found in a session, no API call is made. Zero tokens spent on sessions where nothing identity-relevant happened.
 
-When signals are found, only the matching messages and their surrounding context are sent to the API with a focused diff prompt that includes your current identity. The API only returns new or changed fields - not a full re-extraction.
+## MCP server
+
+devid can run as an MCP server, giving Claude.ai (or any MCP client) direct access to your identity without clipboard pasting.
+
+```bash
+devid mcp    # starts JSON-RPC server on stdin/stdout
+```
+
+Available tools: `get_identity`, `get_snippet`, `get_project`. Configure your MCP client to run `devid mcp` as a stdio transport.
 
 ## Visibility
 
@@ -123,7 +139,7 @@ devid diff
 devid edit
 ```
 
-`devid distribute` and `devid init` show token estimates so you can verify your identity stays within budget (~400 tokens for global context). Sensitive data in non-private sections triggers a warning on save.
+`devid distribute`, `devid init`, and `devid sync` all show token estimates so you can verify your identity stays within budget (~400 tokens for global context). Sensitive data in non-private sections triggers a warning on save.
 
 ## Project overlays
 
@@ -189,8 +205,9 @@ See `schema/identity.toml.example` for the full annotated schema.
 | Claude Code (global) | `~/.claude/CLAUDE.md` | Always |
 | Claude Code (project) | `{repo}/CLAUDE.md` | When repo matches a `[[projects]]` entry |
 | AGENTS.md | `{repo}/AGENTS.md` | When in a git repo |
-| Cursor | `{repo}/.cursor/rules` | When in a git repo |
+| Cursor | `{repo}/.cursor/rules/devid.mdc` | When in a git repo |
 | Clipboard snippet | `devid snippet` | On demand (for claude.ai) |
+| MCP server | `devid mcp` | On demand (for any MCP client) |
 
 ## File locations
 
@@ -199,6 +216,7 @@ See `schema/identity.toml.example` for the full annotated schema.
   identity.toml        # source of truth
   queue/               # pending candidate updates
   logs/                # hook activity logs
+  .last_scan           # watch timestamp tracker
 
 ~/.claude/
   settings.json        # hook config (after devid hook install)

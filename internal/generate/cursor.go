@@ -7,10 +7,18 @@ import (
 	"github.com/Naly-programming/devid/internal/config"
 )
 
+// renderCursor produces an .mdc file for Cursor's .cursor/rules/ directory.
+// Uses YAML frontmatter with alwaysApply: true so it loads on every session.
 func renderCursor(id *config.Identity) string {
 	var b strings.Builder
 
-	b.WriteString("# Developer Identity (devid)\n\n")
+	// MDC frontmatter
+	b.WriteString("---\n")
+	b.WriteString("description: Developer identity and preferences managed by devid\n")
+	b.WriteString("alwaysApply: true\n")
+	b.WriteString("---\n\n")
+
+	b.WriteString("# Developer Identity\n\n")
 
 	if id.Identity.Tone != "" {
 		b.WriteString(fmt.Sprintf("Tone: %s\n", id.Identity.Tone))

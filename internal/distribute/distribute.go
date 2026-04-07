@@ -45,10 +45,11 @@ func Distribute(id *config.Identity) []Result {
 }
 
 func distributeGlobal(id *config.Identity) Result {
-	home, err := os.UserHomeDir()
+	devidDir, err := config.DevidDir()
 	if err != nil {
 		return Result{Target: "claude-global", Err: fmt.Errorf("cannot find home dir: %w", err)}
 	}
+	home := filepath.Dir(devidDir) // ~/.devid -> ~
 
 	claudeDir := filepath.Join(home, ".claude")
 	if err := os.MkdirAll(claudeDir, 0o755); err != nil {
@@ -90,17 +91,18 @@ func distributeProjectTargets(id *config.Identity, repoRoot string, proj *config
 		results = append(results, Result{Target: "agents-md", Path: path, Action: action, Err: err})
 	}
 
-	// Cursor rules
+	// Cursor rules (.cursor/rules/devid.mdc)
 	content, err = generate.Render(id, generate.TargetCursor, nil)
 	if err != nil {
 		results = append(results, Result{Target: "cursor", Err: err})
 	} else {
-		cursorDir := filepath.Join(repoRoot, ".cursor")
-		if err := os.MkdirAll(cursorDir, 0o755); err != nil {
+		rulesDir := filepath.Join(repoRoot, ".cursor", "rules")
+		if err := os.MkdirAll(rulesDir, 0o755); err != nil {
 			results = append(results, Result{Target: "cursor", Err: err})
 		} else {
-			path := filepath.Join(cursorDir, "rules")
-			action, err := writeWithMarkers(path, content)
+			// Cursor .mdc files are standalone - no markers needed, devid owns the whole file
+			path := filepath.Join(rulesDir, "devid.mdc")
+			action, err := writeFile(path, content)
 			results = append(results, Result{Target: "cursor", Path: path, Action: action, Err: err})
 		}
 	}
@@ -143,6 +145,22 @@ func writeWithMarkers(path, content string) (string, error) {
 	}
 
 	return "updated", os.WriteFile(path, []byte(newContent), 0o644)
+}
+
+// writeFile writes content to a file, returning the action taken.
+// Unlike writeWithMarkers, this owns the entire file.
+func writeFile(path, content string) (string, error) {
+	existing, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return "created", os.WriteFile(path, []byte(content), 0o644)
+	}
+	if err != nil {
+		return "", err
+	}
+	if string(existing) == content {
+		return "unchanged", nil
+	}
+	return "updated", os.WriteFile(path, []byte(content), 0o644)
 }
 
 // detectRepo finds the git repo root and extracts the repo name.

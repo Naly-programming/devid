@@ -44,7 +44,7 @@ func FindExistingContextFiles(scanDirs []string) []InferredSource {
 			}
 
 			repoDir := filepath.Join(dir, entry.Name())
-			for _, name := range []string{"CLAUDE.md", "AGENTS.md", ".cursor/rules"} {
+			for _, name := range []string{"CLAUDE.md", "AGENTS.md", ".cursor/rules/devid.mdc", ".cursorrules"} {
 				path := filepath.Join(repoDir, name)
 				content, err := os.ReadFile(path)
 				if err != nil {

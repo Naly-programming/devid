@@ -2,19 +2,23 @@
 <!-- managed by devid - do not edit between markers -->
 # Agent Instructions
 
-Tone: direct, northern, no fluff
-Responses: prose over bullets, hyphens not em dashes, no emoji
+Tone: direct, no fluff
+Responses: prose over bullets
+Pace: fast
 
-Stack: Go . TypeScript . Next.js . PostgreSQL . Supabase
+Stack: Go . TypeScript . PostgreSQL
 
 ## Conventions
-- hyphens not em dashes, no trailing punctuation in comments
-- small focused PRs, one concern per PR
-- conventional commits, lowercase, imperative mood
-- explicit, no silent swallows, log with context
-- clear over clever, full words not abbreviations
+- hyphens not em dashes
+- small focused PRs
+- conventional commits
+- explicit
+- clear over clever
 
 ## AI Preferences
-- concise, skip preamble
-- tests: write them without asking
+- concise
+- dont ask, just do it
+- challenge assumptions
+- code comments: minimal
+- tests: write them
 <!-- devid:end -->
