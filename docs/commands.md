@@ -33,13 +33,25 @@
 | `devid review` | Approve/reject queued identity updates (TUI) |
 | `devid infer` | Infer identity from existing CLAUDE.md files across repos |
 
+## Multi-machine
+
+| Command | Description |
+|---------|-------------|
+| `devid remote set <url>` | Set git remote for syncing identity across machines |
+| `devid remote show` | Show current sync remote |
+| `devid push` | Commit and push identity to remote |
+| `devid pull` | Fetch identity from remote and redistribute |
+
 ## Monitoring
 
 | Command | Description |
 |---------|-------------|
 | `devid status` | Show identity overview - targets, tokens, queue, hook status |
 | `devid diff` | Show what's changed vs distributed files and pending queue |
+| `devid digest` | Summarise what AI tools learned about you recently |
+| `devid digest --analyze` | Also suggest identity updates via API |
 | `devid doctor` | Run diagnostic checks on your setup |
+| `devid update` | Update devid to the latest version |
 | `devid hook install` | Wire up automatic session-end analysis in Claude Code |
 | `devid hook logs` | Show recent hook activity |
 | `devid watch` | Scan recent sessions for identity signals |

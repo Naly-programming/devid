@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Use:           "devid",
 	Short:         "Developer identity manager for AI tools",
 	Long:          "devid maintains a single source-of-truth developer identity file and distributes it as optimised context to every AI coding tool you use.",
-	Version:       "0.1.0",
+	Version:       "0.2.0",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }

@@ -31,7 +31,8 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	id, err := config.Load()
 	if err != nil {
-		return err
+		fmt.Printf("  Problem loading identity: %v\n", err)
+		return silentErr{err}
 	}
 
 	idPath, _ := config.IdentityPath()

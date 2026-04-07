@@ -85,13 +85,38 @@ devid review              # approve what it found
 
 [How auto-sync works](docs/auto-sync.md)
 
+## Weekly digest
+
+See what your AI tools have been picking up about you:
+
+```bash
+devid digest                # last 7 days
+devid digest --analyze      # suggest identity updates via API
+```
+
+[More about digests](docs/digest.md)
+
+## Multi-machine sync
+
+Sync your identity across machines using any git remote:
+
+```bash
+devid remote set git@github.com:you/my-devid-identity.git
+devid push                  # from this machine
+devid pull                  # on another machine
+```
+
+[Multi-machine setup](docs/multi-machine.md)
+
 ## All commands
 
-Core: `init` / `distribute` / `status` / `diff` / `edit`
+Core: `init` / `distribute` / `status` / `diff` / `edit` / `doctor` / `update`
 
-Sync: `sync` / `review` / `hook install` / `watch` / `infer`
+Sync: `sync` / `review` / `hook install` / `watch` / `infer` / `digest`
 
-Extras: `snippet` / `mcp` / `add` / `doctor` / `export` / `import`
+Multi-machine: `remote set` / `push` / `pull`
+
+Extras: `snippet` / `mcp` / `add` / `export` / `import`
 
 [Full command reference](docs/commands.md)
 
@@ -104,6 +129,8 @@ Extras: `snippet` / `mcp` / `add` / `doctor` / `export` / `import`
 - [Distribution targets](docs/targets.md) - all 13 targets and their formats
 - [Identity schema](docs/schema.md) - TOML format, token budget, sensitive data handling
 - [Auto-sync](docs/auto-sync.md) - session hooks, watch mode, signal filtering
+- [Weekly digest](docs/digest.md) - what your AI tools learned about you
+- [Multi-machine sync](docs/multi-machine.md) - push/pull across machines via git
 
 ## License
 

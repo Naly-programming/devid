@@ -50,12 +50,14 @@ Rules:
 - Output the TOML block only, no preamble`
 
 // BuildSyncPrompt builds a contextual prompt that includes the current TOML.
+// Private data is stripped before including the identity.
 func BuildSyncPrompt(current *config.Identity) string {
 	var buf bytes.Buffer
 	buf.WriteString(ExtractionPrompt)
 	buf.WriteString("\n\n---\n\nCurrent identity.toml for reference (update or add to it, do not repeat unchanged values):\n\n```toml\n")
 	if current != nil {
-		toml.NewEncoder(&buf).Encode(current)
+		clean := current.WithoutPrivate()
+		toml.NewEncoder(&buf).Encode(&clean)
 	}
 	buf.WriteString("```\n")
 	return buf.String()

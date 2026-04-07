@@ -77,7 +77,7 @@ func Load() (*Identity, error) {
 	}
 	var id Identity
 	if _, err := toml.DecodeFile(p, &id); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("identity.toml is malformed: %w\n\nFix the file at %s or run `devid init` to recreate it", err, p)
 	}
 	return &id, nil
 }
