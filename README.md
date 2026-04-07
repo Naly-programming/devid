@@ -6,7 +6,13 @@ The core problem: every AI tool starts each session knowing nothing about you. Y
 
 ## Install
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/Naly-programming/devid/main/install.sh | sh
 ```
+
+Or with Go:
+
+```bash
 go install github.com/Naly-programming/devid/cmd/devid@latest
 ```
 
