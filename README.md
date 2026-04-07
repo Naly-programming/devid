@@ -4,6 +4,8 @@ Developer identity manager for AI tools. Maintains a single source-of-truth iden
 
 The core problem: every AI tool starts each session knowing nothing about you. You repeat yourself constantly - your stack, your tone, your conventions. devid captures that once and keeps it everywhere, automatically.
 
+https://github.com/Naly-programming/devid/releases/download/v0.1.0/devid-promo.mp4
+
 ## Install
 
 ```bash
