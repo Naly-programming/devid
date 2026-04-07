@@ -34,10 +34,12 @@ brews:
   - repository:
       owner: Naly-programming
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     name: devid
     homepage: "https://github.com/Naly-programming/devid"
     description: "Developer identity manager for AI tools"
     license: "MIT"
+    skip_upload: auto
     install: |
       bin.install "devid"
     test: |
