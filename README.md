@@ -16,11 +16,25 @@ devid captures that once and keeps it everywhere, automatically.
 
 ## Install
 
+**Linux / macOS:**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Naly-programming/devid/main/install.sh | sh
 ```
 
-Also available via `npm install -g devid-cli` or `go install github.com/Naly-programming/devid/cmd/devid@latest`.
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/Naly-programming/devid/main/install.ps1 | iex
+```
+
+**Or with Go (any platform):**
+
+```bash
+go install github.com/Naly-programming/devid/cmd/devid@latest
+```
+
+Or grab a binary from the [releases page](https://github.com/Naly-programming/devid/releases).
 
 ## Quick start
 

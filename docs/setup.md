@@ -2,16 +2,25 @@
 
 ## Install
 
+**Linux / macOS:**
+
 ```bash
-# shell script (Linux/macOS)
 curl -fsSL https://raw.githubusercontent.com/Naly-programming/devid/main/install.sh | sh
+```
 
-# npm (any platform)
-npm install -g devid-cli
+**Windows (PowerShell):**
 
-# Go
+```powershell
+irm https://raw.githubusercontent.com/Naly-programming/devid/main/install.ps1 | iex
+```
+
+**With Go (any platform):**
+
+```bash
 go install github.com/Naly-programming/devid/cmd/devid@latest
 ```
+
+**Manual:** Download a binary for your platform from the [releases page](https://github.com/Naly-programming/devid/releases) and put it on your PATH.
 
 ## Create your identity
 
